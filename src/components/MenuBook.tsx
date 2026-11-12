@@ -249,6 +249,97 @@ export const MenuBook = forwardRef<MenuBookHandle, MenuBookProps>(function MenuB
     return () => element.removeEventListener("click", handleClick);
   }, []);
 
+  /* Own horizontal swipes on touch screens. StPageFlip only treats very
+     quick flicks as swipes and otherwise guesses the direction from where
+     the finger is released, which turns slow drags the wrong way. Deciding
+     direction here makes "swipe left = next / swipe right = back" hold at
+     any speed, while vertical drags are left to scroll the dish list and
+     zoomed readers keep panning the book instead of turning pages. */
+  useEffect(() => {
+    const element = bookRef.current;
+    if (!element) return;
+
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+    let horizontal = false;
+
+    const onStart = (event: TouchEvent) => {
+      /* Keep the library away from touch gestures: after a 250 ms hold it
+         begins its own drag and turns the page by release point, which is
+         exactly what made slow swipes invert and vertical drags flip. */
+      event.stopPropagation();
+      if (event.touches.length !== 1 || element.closest(".stage--zoomed")) {
+        tracking = false;
+        return;
+      }
+      const touch = event.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      tracking = true;
+      horizontal = false;
+    };
+
+    const onMove = (event: TouchEvent) => {
+      event.stopPropagation();
+      if (!tracking || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+
+      if (!horizontal) {
+        if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+          horizontal = true;
+        } else if (Math.abs(dy) > 12 && Math.abs(dy) >= Math.abs(dx)) {
+          /* Vertical: leave it to the browser so the dish list scrolls. */
+          tracking = false;
+          return;
+        } else {
+          return;
+        }
+      }
+
+      event.preventDefault();
+    };
+
+    const onEnd = (event: TouchEvent) => {
+      event.stopPropagation();
+      if (!tracking || !horizontal) {
+        tracking = false;
+        return;
+      }
+      tracking = false;
+
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+        if (dx < 0) flipRef.current?.flipNext("bottom");
+        else flipRef.current?.flipPrev("bottom");
+      }
+    };
+
+    const onCancel = (event: TouchEvent) => {
+      event.stopPropagation();
+      tracking = false;
+      horizontal = false;
+    };
+
+    element.addEventListener("touchstart", onStart, { capture: true, passive: true });
+    element.addEventListener("touchmove", onMove, { capture: true, passive: false });
+    element.addEventListener("touchend", onEnd, { capture: true, passive: true });
+    element.addEventListener("touchcancel", onCancel, { capture: true, passive: true });
+
+    return () => {
+      element.removeEventListener("touchstart", onStart, { capture: true });
+      element.removeEventListener("touchmove", onMove, { capture: true });
+      element.removeEventListener("touchend", onEnd, { capture: true });
+      element.removeEventListener("touchcancel", onCancel, { capture: true });
+    };
+  }, []);
+
   return (
     <div
       aria-hidden={!ready}
