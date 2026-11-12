@@ -57,7 +57,7 @@ interface PriceDisplayProps {
 }
 
 export function PriceDisplay({ amount, currency }: PriceDisplayProps) {
-  return <span className="text-gold-deep">{formatPrice(amount, currency)}</span>;
+  return <span className="font-semibold text-gold-deep">{formatPrice(amount, currency)}</span>;
 }
 
 interface ConvertedPriceProps {

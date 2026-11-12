@@ -40,6 +40,7 @@ function Dish({
           src={photoSrc(item.photo, 900)}
           alt={item.name}
           loading="lazy"
+          decoding="async"
           className="h-full w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.07]"
         />
         <span className="absolute inset-0 bg-ink/0 transition-colors duration-300 group-hover:bg-ink/25" />

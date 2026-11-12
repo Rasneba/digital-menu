@@ -8,7 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import { PageFlip } from "page-flip";
-import { categories, type Currency } from "@/data/menu";
+import { categories, TOTAL_PAGES, type Currency } from "@/data/menu";
+import { haptic } from "@/utils/haptics";
 import { cn } from "@/utils/cn";
 import { CoverPage } from "./book/CoverPage";
 import { ChapterPage } from "./book/ChapterPage";
@@ -31,7 +32,10 @@ export interface MenuBookHandle {
 interface MenuBookProps {
   onPositionChange?: (position: BookPosition) => void;
   onPhotoOpen?: (photoId: number) => void;
+  onReady?: () => void;
   currency: Currency;
+  /** Page index to open on — used to restore the reader's place. */
+  initialPage?: number;
 }
 
 /**
@@ -39,7 +43,7 @@ interface MenuBookProps {
  * Desktop shows a two page spread, mobile falls back to a single page book.
  */
 export const MenuBook = forwardRef<MenuBookHandle, MenuBookProps>(function MenuBook(
-  { onPositionChange, onPhotoOpen, currency },
+  { onPositionChange, onPhotoOpen, onReady, currency, initialPage = 0 },
   ref,
 ) {
   const bookRef = useRef<HTMLDivElement>(null);
@@ -47,6 +51,7 @@ export const MenuBook = forwardRef<MenuBookHandle, MenuBookProps>(function MenuB
   const flipRef = useRef<PageFlip | null>(null);
   const positionCb = useRef(onPositionChange);
   const photoCb = useRef(onPhotoOpen);
+  const readyCb = useRef(onReady);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -57,9 +62,15 @@ export const MenuBook = forwardRef<MenuBookHandle, MenuBookProps>(function MenuB
     photoCb.current = onPhotoOpen;
   }, [onPhotoOpen]);
 
+  useEffect(() => {
+    readyCb.current = onReady;
+  }, [onReady]);
+
   /* The printed pages never change, so they are created once and kept
      referentially stable — React then never touches the DOM nodes that
-     StPageFlip has taken over. */
+     StPageFlip has taken over. `currency` is the one legitimate
+     dependency: updating it re-renders the price labels in place (keys
+     are stable, so no DOM node is recreated). */
   const pages = useMemo<ReactNode[]>(() => {
     const content: ReactNode[] = [<CoverPage key="cover" />];
 
@@ -95,7 +106,8 @@ export const MenuBook = forwardRef<MenuBookHandle, MenuBookProps>(function MenuB
         {page}
       </div>
     ));
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currency]);
 
   useImperativeHandle(
     ref,
@@ -124,6 +136,11 @@ export const MenuBook = forwardRef<MenuBookHandle, MenuBookProps>(function MenuB
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    const startPage = Math.min(
+      Math.max(Math.trunc(initialPage) || 0, 0),
+      Math.max(TOTAL_PAGES - 1, 0),
+    );
+
     const flip = new PageFlip(element, {
       width: 550,
       height: 800,
@@ -133,10 +150,10 @@ export const MenuBook = forwardRef<MenuBookHandle, MenuBookProps>(function MenuB
       minHeight: 200,
       maxHeight: 820,
       drawShadow: true,
-      flippingTime: reduceMotion ? 0 : 1150,
+      flippingTime: reduceMotion ? 0 : 950,
       usePortrait: true,
       startZIndex: 20,
-      startPage: 0,
+      startPage,
       autoSize: true,
       maxShadowOpacity: 0.42,
       showCover: true,
@@ -145,6 +162,7 @@ export const MenuBook = forwardRef<MenuBookHandle, MenuBookProps>(function MenuB
       clickEventForward: true,
       useMouseEvents: true,
       disableFlipByClick: false,
+      showPageCorners: true,
     });
 
     flipRef.current = flip;
@@ -159,9 +177,13 @@ export const MenuBook = forwardRef<MenuBookHandle, MenuBookProps>(function MenuB
 
     flip.on("init", () => {
       setReady(true);
+      readyCb.current?.();
       publish();
     });
-    flip.on("flip", publish);
+    flip.on("flip", (event) => {
+      if (typeof event?.data === "number") haptic(10);
+      publish();
+    });
     flip.on("changeOrientation", publish);
 
     const items = pageRefs.current.filter(Boolean) as HTMLElement[];
@@ -229,13 +251,19 @@ export const MenuBook = forwardRef<MenuBookHandle, MenuBookProps>(function MenuB
 
   return (
     <div
-      ref={bookRef}
+      aria-hidden={!ready}
       className={cn(
         "h-full w-full transition-opacity duration-700 ease-out",
         ready ? "opacity-100" : "opacity-0",
       )}
     >
-      {pages}
+      {/* This div is handed over to StPageFlip on mount. Its className and
+          attributes must stay byte-identical across React renders — the
+          library adds its own class (`stf__parent`) and inline styles,
+          and any change would silently wipe them. */}
+      <div ref={bookRef} className="h-full w-full">
+        {pages}
+      </div>
     </div>
   );
 });
