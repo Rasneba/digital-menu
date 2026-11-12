@@ -40,6 +40,12 @@
     background: var(--color-gold);
     color: var(--color-ink);
   }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -234,6 +240,105 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Overlay panels, toasts and the loading ring                         */
+/* ------------------------------------------------------------------ */
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(48px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes loader-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sheet-up {
+  animation: sheet-up 0.38s cubic-bezier(0.32, 0.72, 0.25, 1) both;
+}
+
+.sheet-fade {
+  animation: sheet-fade 0.28s ease-out both;
+}
+
+.toast-in {
+  animation: toast-in 0.32s cubic-bezier(0.32, 0.72, 0.25, 1) both;
+}
+
+.loader-ring {
+  animation: loader-spin 1.15s linear infinite;
+}
+
+/* Hide scrollbars on the panning stage while keeping it scrollable */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ultra-narrow phones (≤ 380px): compress the toolbar a notch */
+@media (max-width: 380px) {
+  .toolbar-pill {
+    gap: 0;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .toolbar-pill button {
+    height: 30px;
+    width: 30px;
+  }
+
+  .toolbar-pill [aria-live="polite"] {
+    min-width: 2.15rem;
+  }
+
+  .toolbar-pill svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* While the reader has zoomed in, horizontal drags belong to panning,
+   not to page-turning — otherwise the book hijacks the gesture. */
+.stage--zoomed .stf__parent {
+  touch-action: pan-x pan-y;
+}
+
+/* ------------------------------------------------------------------ */
 /* Mobile / touch                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -249,6 +354,13 @@
 
   .menu-page {
     padding: 0;
+  }
+}
+
+/* Phones in landscape: reclaim vertical space — chapter rail goes */
+@media (max-height: 30rem) {
+  .bookmark-rail {
+    display: none;
   }
 }
 

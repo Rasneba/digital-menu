@@ -7,8 +7,10 @@ export default function HomePage() {
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-espresso">
       <div className="absolute inset-0">
         <img
-          src={photoSrc(31970867, 2000)}
+          src={photoSrc(31970867, 1600)}
           alt=""
+          decoding="async"
+          fetchPriority="high"
           className="h-full w-full object-cover opacity-35"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-espresso/85 via-espresso/80 to-espresso" />

@@ -1,6 +1,6 @@
 import { PageFrame } from "./PageFrame";
 import { Monogram } from "@/components/Brand";
-import { brand, photoSrc } from "@/data/menu";
+import { brand, photoSrc, BACK_COVER_PHOTO } from "@/data/menu";
 
 const KEY = [
   { key: "V", label: "Vegetarian" },
@@ -15,8 +15,10 @@ export function BackCoverPage() {
     <PageFrame variant="cover">
       <div className="absolute inset-0 overflow-hidden">
         <img
-          src={photoSrc(34206671, 1600)}
+          src={photoSrc(BACK_COVER_PHOTO, 1600)}
           alt=""
+          loading="lazy"
+          decoding="async"
           className="h-full w-full object-cover opacity-30"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0d1712]/92 via-[#16241c]/82 to-[#0b1410]/96" />

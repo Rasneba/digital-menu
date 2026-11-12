@@ -25,7 +25,7 @@ export function Monogram({ className }: { className?: string }) {
         fontSize="42"
         fill="currentColor"
       >
-        É
+        Y
       </text>
     </svg>
   );
@@ -48,11 +48,11 @@ export function Wordmark({
             compact ? "text-lg" : "text-2xl",
           )}
         >
-          ÉCLAT
+          YEGESHA
         </span>
         {!compact && (
-          <span className="mt-1 text-[10px] font-light uppercase tracking-[0.42em] opacity-70">
-            Café &amp; Kitchen
+          <span className="mt-1 text-[9px] font-light uppercase tracking-[0.42em] opacity-70">
+            Specialty Café &amp; Roastery
           </span>
         )}
       </span>

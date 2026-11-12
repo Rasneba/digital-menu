@@ -44,6 +44,8 @@ export function ChapterPage({
           <img
             src={photoSrc(category.photo, 1400)}
             alt={category.title}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-transparent to-transparent" />

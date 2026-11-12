@@ -739,6 +739,12 @@ export const categories: MenuCategory[] = [
 
 const CDN = "https://images.pexels.com/photos";
 
+/* Keep the CDN parameters byte-compatible with the pipeline the menu was
+   built and tested against. Modern-format negotiation (WebP/AVIF) via
+   `auto=format` is deliberately not enabled: the CDN's response to it
+   could not be verified from the build sandbox, and breaking the food
+   photography is not an acceptable trade for the byte savings. See the
+   project notes for how to enable it safely. */
 export function photoSrc(id: number, width = 900) {
   return `${CDN}/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${width}`;
 }
@@ -746,6 +752,38 @@ export function photoSrc(id: number, width = 900) {
 export function photoFull(id: number) {
   return `${CDN}/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=2400`;
 }
+
+/* ------------------------------------------------------------------ */
+/* Book structure — page count, page order, per-page imagery          */
+/* ------------------------------------------------------------------ */
+
+/** Total pages: cover + (chapter plate + dishes) per category + back cover. */
+export const TOTAL_PAGES = 2 + categories.length * 2;
+
+/** Photo used by the printed front cover (kept in sync with CoverPage). */
+export const COVER_PHOTO = 39047893;
+/** Photo used by the printed back cover (kept in sync with BackCoverPage). */
+export const BACK_COVER_PHOTO = 34206671;
+
+let pageImagesCache: Map<number, string[]> | null = null;
+
+/** Image URLs grouped by book page index — used to preload pages around the reader. */
+export function pagesImageUrls(): Map<number, string[]> {
+  if (pageImagesCache) return pageImagesCache;
+  const map = new Map<number, string[]>();
+  map.set(0, [photoSrc(COVER_PHOTO, 1600)]);
+  categories.forEach((category, i) => {
+    map.set(1 + i * 2, [photoSrc(category.photo, 1400)]);
+    map.set(
+      2 + i * 2,
+      category.items.map((item) => photoSrc(item.photo, 900)),
+    );
+  });
+  map.set(TOTAL_PAGES - 1, [photoSrc(BACK_COVER_PHOTO, 1600)]);
+  pageImagesCache = map;
+  return map;
+}
+
 
 export const allPhotos: { id: number; name: string; category: string }[] =
   categories.flatMap((category) =>

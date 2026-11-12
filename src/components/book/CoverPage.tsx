@@ -1,14 +1,16 @@
 import { PageFrame } from "./PageFrame";
 import { Monogram } from "@/components/Brand";
-import { brand, photoSrc } from "@/data/menu";
+import { brand, photoSrc, COVER_PHOTO } from "@/data/menu";
 
 export function CoverPage() {
   return (
     <PageFrame variant="cover">
       <div className="absolute inset-0 overflow-hidden">
         <img
-          src={photoSrc(39047893, 1600)}
+          src={photoSrc(COVER_PHOTO, 1600)}
           alt=""
+          decoding="async"
+          fetchPriority="high"
           className="h-full w-full object-cover opacity-45"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#16241c]/85 via-[#16241c]/70 to-[#0b1410]/95" />
